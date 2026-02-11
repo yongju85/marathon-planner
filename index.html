@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏃 조깅 코스 플래너</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1>🏃 조깅 코스 플래너</h1>
+
+        <!-- 메뉴 탭 -->
+        <div class="menu-tabs">
+            <button class="tab-btn active" data-tab="weather">🌦️ 날씨/미세먼지</button>
+            <button class="tab-btn" data-tab="planner">🗺️ 코스 플래너</button>
+            <button class="tab-btn" data-tab="pace">⏱️ 페이스 계산기</button>
+            <button class="tab-btn" data-tab="records">🏅 대회 기록장</button>
+        </div>
+
+        <!-- 날씨/미세먼지 섹션 -->
+        <div id="weather-section" class="tab-content active">
+            <div class="main-grid">
+                <div class="control-panel">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">날씨 조회</h2>
+                    <div class="form-group">
+                        <label>📍 지역 검색</label>
+                        <div class="location-group">
+                            <input type="text" id="weather-location" placeholder="예: 서울 강남구, 경기 파주시" value="경기 파주시">
+                            <button id="weather-search-btn" class="search-btn">🔍</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>⏰ 시간 설정</label>
+                        <div class="time-shortcuts">
+                            <button type="button" class="time-btn" data-time="now">현재</button>
+                            <button type="button" class="time-btn" data-time="today_evening">🌙 오늘 18시</button>
+                            <button type="button" class="time-btn" data-time="tomorrow_morning">☀️ 내일 7시</button>
+                        </div>
+                        <input type="datetime-local" id="weather-time">
+                    </div>
+                    <button id="weather-check-btn" class="generate-btn" style="background: #20bf6b;">
+                        🌤️ 조회하기
+                    </button>
+                </div>
+
+                <div id="weather-display-panel"
+                    style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #666;">
+                    <h3>좌측에서 지역과 시간을 선택하고<br>조회 버튼을 눌러주세요.</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 코스 플래너 섹션 -->
+        <div id="planner-section" class="tab-content">
+            <div class="main-grid">
+                <div class="control-panel">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">코스 설정</h2>
+
+                    <div class="form-group">
+                        <label>📍 출발지</label>
+                        <div class="location-group">
+                            <input type="text" id="location" placeholder="예: 야당역, 운정호수공원">
+                            <button id="planner-search-start" class="search-btn">🔍</button>
+                            <button id="planner-pick-start" class="search-btn" title="지도에서 선택">🗺️</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🏁 도착지</label>
+                        <div class="location-group">
+                            <input type="text" id="location-end" placeholder="예: 일산호수공원">
+                            <button id="planner-search-end" class="search-btn">🔍</button>
+                            <button id="planner-pick-end" class="search-btn" title="지도에서 선택">🗺️</button>
+                        </div>
+                        <button id="set-same-start-btn" class="small-btn"
+                            style="margin-top: 5px; width: 100%; font-size: 12px; padding: 5px;">📍 출발지와 동일하게
+                            설정</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📏 목표 거리 (km)</label>
+                        <input type="number" id="distance" placeholder="예: 5" step="0.1">
+                        <p id="distance-info" style="font-size: 12px; color: #666; margin-top: 5px; display:none;">*
+                            출발/도착지가 다르면 거리는 자동 계산됩니다.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🏃 페이스 (분/km)</label>
+                        <div class="route-type">
+                            <div class="route-btn active" data-type="circular">
+                                ⭕ 원형<br><small>출발점 회귀</small>
+                            </div>
+                            <div class="route-btn" data-type="point-to-point">
+                                ➡️ 직선<br><small>A → B</small>
+                            </div>
+                            <div class="route-btn" data-type="out-and-back">
+                                ↔️ 왕복<br><small>A → B → A</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>⏰ 조깅 시간</label>
+                        <input type="datetime-local" id="jogging-time">
+                    </div>
+
+                    <div class="button-group" style="display: flex; gap: 10px;">
+                        <button id="course-generate-btn" class="generate-btn" style="flex: 2;">
+                            🚀 코스 생성하기
+                        </button>
+                        <button id="app-reset-btn" class="reset-btn" style="flex: 1; background: #a4b0be;">
+                            🔄 초기화
+                        </button>
+                    </div>
+
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>코스 생성 중...</div>
+                    </div>
+                </div>
+
+                <div id="map-container">
+                    <div id="map-guidance" class="map-guidance">📍 출발지를 선택해주세요</div>
+                    <div id="map"></div>
+                </div>
+            </div>
+
+            <div class="weather-panel">
+                <h2 style="margin-bottom: 15px; color: #667eea;">☁️ 날씨 정보</h2>
+                <div class="weather-info" id="weather-info"></div>
+            </div>
+
+            <!-- records-section was here, moving it out -->
+
+            <div class="route-info">
+                <h2 style="margin-bottom: 15px; color: #667eea;">📊 코스 정보</h2>
+                <div class="route-stats" id="route-stats"></div>
+                <!-- 저장 버튼 (동적으로 표시됨) -->
+                <div id="save-btn-container" style="text-align: center; margin-top: 20px; display: none;">
+                    <button class="save-btn" onclick="saveCurrentRoute()">💾 현재 코스 저장하기</button>
+                </div>
+            </div>
+
+            <!-- 저장된 코스 목록 -->
+            <div class="saved-routes-panel">
+                <h2 style="margin-bottom: 15px; color: #667eea;">📂 저장된 코스</h2>
+                <div id="saved-routes-list" class="saved-routes-list">
+                    <div class="empty-message">저장된 코스가 없습니다.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 대회 기록 섹션 -->
+        <div id="records-section" class="tab-content">
+            <div class="records-container">
+                <div class="record-form-card">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">🏅 새로운 대회 기록 등록</h2>
+                    <div class="records-form-grid">
+                        <div class="form-group">
+                            <label>🏁 대회명</label>
+                            <input type="text" id="race-name" placeholder="예: JTBC 서울 마라톤">
+                        </div>
+                        <div class="form-group">
+                            <label>📅 대회 일자</label>
+                            <input type="date" id="race-date">
+                        </div>
+                        <div class="form-group">
+                            <label>📍 지역</label>
+                            <input type="text" id="race-location" placeholder="예: 서울 마포구">
+                        </div>
+                        <div class="form-group">
+                            <label>🏃 코스 종류</label>
+                            <select id="race-type">
+                                <option value="5">5km</option>
+                                <option value="10">10km</option>
+                                <option value="21.0975">하프 마라톤</option>
+                                <option value="42.195">풀코스</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>👟 착용 러닝화</label>
+                            <input type="text" id="race-shoes" placeholder="예: 나이키 알파플라이 3">
+                        </div>
+                        <div class="form-group">
+                            <label>⏱️ 완주 기록 (HH:MM:SS)</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="number" id="race-h" placeholder="시" min="0" max="99">
+                                <input type="number" id="race-m" placeholder="분" min="0" max="59">
+                                <input type="number" id="race-s" placeholder="초" min="0" max="59">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>📜 기록증/사진</label>
+                            <input type="file" id="race-photo" accept="image/*">
+                            <div id="photo-preview-container" style="margin-top: 10px; display: none;">
+                                <img id="photo-preview" src=""
+                                    style="width: 100%; border-radius: 8px; border: 1px solid #ddd;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>📝 메모/코멘트</label>
+                            <textarea id="race-memo" placeholder="대회 소감이나 기억하고 싶은 점을 적어보세요."
+                                style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: none;"></textarea>
+                        </div>
+                    </div>
+                    <div class="button-group" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button id="save-race-btn" class="generate-btn"
+                            style="background: #20bf6b; flex: 2; margin-top: 0;">
+                            💾 기록 저장하기
+                        </button>
+                        <button id="cancel-edit-btn" class="reset-btn"
+                            style="background: #a4b0be; flex: 1; display: none;">
+                            ❌ 취소
+                        </button>
+                    </div>
+                </div>
+
+                <div class="records-history">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">📂 나의 대회 이력</h2>
+                    <div id="race-records-list" class="race-records-grid">
+                        <!-- 기록 카드들이 여기에 렌더링됨 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이스 계산기 섹션 -->
+        <div id="pace-section" class="tab-content">
+            <div class="pace-container">
+                <h2 style="margin-bottom: 25px; color: #667eea; text-align: center;">⏱️ 마라톤 페이스 계산기</h2>
+
+                <div class="pace-grid">
+                    <!-- 거리 입력 -->
+                    <div class="pace-card">
+                        <h3>📏 거리</h3>
+                        <div class="input-group">
+                            <input type="number" id="calc-distance" placeholder="0" step="0.01">
+                            <select id="distance-unit">
+                                <option value="km">km</option>
+                                <option value="m">m</option>
+                                <option value="mile">마일</option>
+                            </select>
+                        </div>
+                        <div class="preset-buttons">
+                            <button type="button" data-km="5">5K</button>
+                            <button type="button" data-km="10">10K</button>
+                            <button type="button" data-km="21.0975">하프</button>
+                            <button type="button" data-km="42.195">풀</button>
+                        </div>
+                    </div>
+
+                    <!-- 시간 입력 -->
+                    <div class="pace-card">
+                        <h3>⏰ 소요 시간</h3>
+                        <div class="time-inputs">
+                            <div class="time-input-group">
+                                <input type="number" id="calc-hours" placeholder="0" min="0" max="99">
+                                <label>시간</label>
+                            </div>
+                            <span class="time-separator">:</span>
+                            <div class="time-input-group">
+                                <input type="number" id="calc-minutes" placeholder="0" min="0" max="59">
+                                <label>분</label>
+                            </div>
+                            <span class="time-separator">:</span>
+                            <div class="time-input-group">
+                                <input type="number" id="calc-seconds" placeholder="0" min="0" max="59">
+                                <label>초</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 페이스 입력 -->
+                    <div class="pace-card">
+                        <h3>👟 페이스</h3>
+                        <div class="time-inputs">
+                            <div class="time-input-group">
+                                <input type="number" id="calc-pace-min" placeholder="0" min="0" max="59">
+                                <label>분</label>
+                            </div>
+                            <span class="time-separator">:</span>
+                            <div class="time-input-group">
+                                <input type="number" id="calc-pace-sec" placeholder="0" min="0" max="59">
+                                <label>초</label>
+                            </div>
+                            <span class="pace-unit">/km</span>
+                        </div>
+                    </div>
+
+                    <!-- 시속 입력 -->
+                    <div class="pace-card">
+                        <h3>🚀 시속</h3>
+                        <div class="input-group">
+                            <input type="number" id="calc-speed" placeholder="0" step="0.1">
+                            <span class="unit-label">km/h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결과 표시 -->
+                <div class="result-panel" id="result-panel">
+                    <h3>📊 계산 결과</h3>
+                    <div class="result-grid" id="result-grid">
+                        <div class="result-item">
+                            <span class="result-label">거리</span>
+                            <span class="result-value" id="result-distance">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">소요 시간</span>
+                            <span class="result-value" id="result-time">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">페이스</span>
+                            <span class="result-value" id="result-pace">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">시속</span>
+                            <span class="result-value" id="result-speed">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 구간별 예상 기록 -->
+                <div class="splits-panel" id="splits-panel" style="display: none;">
+                    <h3>🏁 구간별 예상 기록</h3>
+                    <div class="splits-grid" id="splits-grid"></div>
+                </div>
+
+                <button id="calc-reset-btn" class="reset-btn">🔄 초기화</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2canvas -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

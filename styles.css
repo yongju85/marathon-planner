@@ -1,0 +1,1148 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.control-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.location-group {
+    display: flex;
+    gap: 10px;
+}
+
+.search-btn {
+    padding: 0 15px;
+    background: #f0f4ff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+
+.search-btn:hover {
+    background: #e0e7ff;
+    border-color: #667eea;
+}
+
+.time-shortcuts {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.time-btn {
+    flex: 1;
+    padding: 8px 5px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.time-btn:hover {
+    background: #f0f4ff;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.route-type {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.route-btn {
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    text-align: center;
+}
+
+.route-btn:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.route-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+
+.small-btn {
+    background: #f1f3f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.small-btn:hover {
+    background: #e0e7ff;
+    color: #667eea;
+    border-color: #667eea;
+}
+
+.generate-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-top: 10px;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.generate-btn:active {
+    transform: translateY(0);
+}
+
+#map-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.map-guidance {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 25px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    font-weight: bold;
+    color: #667eea;
+    border: 2px solid #667eea;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.map-guidance.success {
+    color: #20bf6b;
+    border-color: #20bf6b;
+}
+
+.weather-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: none;
+}
+
+.weather-panel.show {
+    display: block;
+}
+
+.weather-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.weather-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.weather-card h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.weather-card .value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.route-info {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    margin-top: 20px;
+    display: none;
+}
+
+.route-info.show {
+    display: block;
+}
+
+.route-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-card .label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-card .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: white;
+    font-size: 18px;
+}
+
+.loading.show {
+    display: block;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 1024px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-tabs {
+        flex-direction: column;
+    }
+
+    .pace-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 메뉴 탭 스타일 */
+.menu-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.tab-btn {
+    padding: 15px 40px;
+    background: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tab-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 페이스 계산기 스타일 */
+.pace-container {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.pace-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.pace-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+.pace-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.pace-card h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.pace-card .input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.pace-card .input-group input {
+    flex: 3;
+    min-width: 120px;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    color: #333;
+}
+
+.pace-card .input-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.pace-card .input-group select {
+    flex: 1;
+    min-width: 60px;
+    max-width: 80px;
+    padding: 10px 5px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    background: white;
+}
+
+.pace-card .input-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.unit-label {
+    font-weight: 600;
+    color: #666;
+    min-width: 50px;
+}
+
+.preset-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.preset-buttons button {
+    flex: 1;
+    padding: 8px 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.preset-buttons button:hover {
+    background: #764ba2;
+    transform: translateY(-1px);
+}
+
+.time-inputs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.time-input-group {
+    text-align: center;
+}
+
+.time-input-group input {
+    width: 60px;
+    padding: 12px 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.time-input-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.time-input-group label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.time-separator {
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.pace-unit {
+    font-weight: 600;
+    color: #666;
+    margin-left: 10px;
+}
+
+/* 결과 패널 */
+.result-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.result-panel h3 {
+    color: white;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.result-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.result-label {
+    display: block;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.result-value {
+    display: block;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* 구간별 기록 패널 */
+.splits-panel {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.splits-panel h3 {
+    color: #667eea;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.splits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.split-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid #e0e0e0;
+}
+
+.split-distance {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.split-time {
+    display: block;
+    font-size: 13px;
+    color: #333;
+}
+
+/* 초기화 버튼 */
+.reset-btn {
+    width: 100%;
+    padding: 15px;
+    background: #f8f9fa;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reset-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .result-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .time-input-group input {
+        width: 50px;
+        padding: 10px 5px;
+        font-size: 16px;
+    }
+}
+
+/* 방향 지시 화살표 */
+.direction-arrow {
+    background: transparent;
+    border: none;
+    /* 내부 요소들이 absolute 포지셔닝을 사용할 수 있도록 */
+    position: relative;
+}
+
+/* 코스 설명 박스 */
+.course-description-box {
+    margin-top: 20px;
+    background: #f0f4ff;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 5px solid #667eea;
+}
+
+.course-description-box h3 {
+    margin-bottom: 10px;
+    color: #667eea;
+    font-size: 16px;
+}
+
+.course-summary {
+    margin-bottom: 10px;
+    line-height: 1.5;
+    color: #333;
+    font-size: 14px;
+}
+
+.course-tip {
+    font-size: 13px;
+    color: #666;
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+/* 저장 버튼 및 목록 스타일 */
+.save-btn {
+    padding: 12px 25px;
+    background: #20bf6b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(32, 191, 107, 0.3);
+}
+
+.save-btn:hover {
+    background: #26de81;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(32, 191, 107, 0.4);
+}
+
+.saved-routes-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    margin-top: 20px;
+}
+
+/* 저장된 코스 목록 그리드 (한 줄에 4개) */
+.saved-routes-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.saved-route-card {
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    /* 세로 배치 */
+    overflow: hidden;
+    transition: all 0.2s;
+    height: 100%;
+}
+
+.saved-route-card:hover {
+    border-color: #667eea;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.saved-route-left {
+    width: 100%;
+    height: 150px;
+    /* 이미지 높이 고정 */
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.saved-route-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-img {
+    width: 100%;
+    height: 100%;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.saved-route-info {
+    padding: 15px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.saved-route-title {
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.saved-route-details {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.delete-btn {
+    width: 100%;
+    border-radius: 0;
+    margin: 0;
+    padding: 10px;
+    background: #ff4757;
+    color: white;
+    font-weight: bold;
+}
+
+@media (max-width: 1200px) {
+    .saved-routes-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .saved-routes-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+.delete-btn:hover {
+    background: #ff6b81;
+}
+
+/* 날씨 대시보드 스타일 */
+.weather-dashboard {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+}
+
+.weather-main-card {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.weather-icon {
+    font-size: 60px;
+    margin-bottom: 10px;
+}
+
+.weather-temp {
+    font-size: 48px;
+    font-weight: 800;
+    color: #333;
+}
+
+.weather-desc {
+    font-size: 18px;
+    color: #666;
+}
+
+.weather-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 20px;
+}
+
+.weather-item {
+    text-align: center;
+}
+
+.weather-item .label {
+    display: block;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.weather-item .val {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* 미세먼지 스타일 */
+.dust-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 100%;
+}
+
+.dust-box {
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dust-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    opacity: 0.9;
+}
+
+.dust-value {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.dust-status {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* 미세먼지 단계별 색상 */
+.dust-good {
+    background: linear-gradient(135deg, #20bf6b, #0eb87f);
+}
+
+/* 좋음 - 파랑/초록 */
+.dust-normal {
+    background: linear-gradient(135deg, #f7b731, #f6e58d);
+    color: #555;
+}
+
+/* 보통 - 노랑 (글자색 진하게) */
+.dust-bad {
+    background: linear-gradient(135deg, #fa8231, #eb3b5a);
+}
+
+/* 나쁨 - 주황 */
+.dust-very-bad {
+    background: linear-gradient(135deg, #eb3b5a, #fc5c65);
+}
+
+/* 매우나쁨 - 빨강 */
+
+
+/* 러너 가이드 박스 */
+.dust-guidance-box {
+    width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.guidance-title {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.guidance-message {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.4;
+    word-break: keep-all;
+}
+
+/* 러닝 가이드 신호등 색상 (텍스트 그림자 추가로 가독성 확보) */
+.dust-guidance-box.dust-good {
+    background: linear-gradient(135deg, #20bf6b, #0eb87f);
+}
+
+.dust-guidance-box.dust-normal {
+    background: linear-gradient(135deg, #f7b731, #f6e58d);
+    color: #444;
+    /* 노랑 배경엔 어두운 글씨 */
+}
+
+.dust-guidance-box.dust-bad {
+    background: linear-gradient(135deg, #fa8231, #eb3b5a);
+}
+
+.dust-guidance-box.dust-very-bad {
+    background: linear-gradient(135deg, #eb3b5a, #fc5c65);
+}
+
+/* 대회 기록 섹션 스타일 */
+.records-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.record-form-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    margin-bottom: 30px;
+}
+
+.records-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.race-records-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.race-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.race-card:hover {
+    transform: translateY(-5px);
+    border-color: #667eea;
+}
+
+.race-card-img-wrap {
+    width: 100%;
+    height: 200px;
+    background: #f1f3f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #eee;
+    overflow: hidden;
+}
+
+.race-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.race-card-content {
+    padding: 20px;
+    flex: 1;
+}
+
+.race-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.race-card-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #333;
+}
+
+.race-card-type {
+    background: #667eea;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.race-card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.race-stat-item {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.race-stat-label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.race-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #222;
+}
+
+.race-card-footer {
+    padding: 15px;
+    background: #f8fafc;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.race-card-memo {
+    margin-top: 10px;
+    padding: 10px;
+    background: #fff9db;
+    border-left: 4px solid #fcc419;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #495057;
+    line-height: 1.5;
+    font-style: italic;
+    word-break: break-all;
+}
+
+.race-weather {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.race-delete-btn {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 5px;
+    }
+}
+
+@media (max-width: 600px) {
+    .race-records-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .race-card-header {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
