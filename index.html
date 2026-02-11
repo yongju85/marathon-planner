@@ -337,10 +337,16 @@
 
     <!-- html2canvas -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- 모바일 디버깅용 콘솔 (문제 해결 후 style="display:none"으로 변경 예정) -->
+    <div id="debug-console"
+        style="position:fixed; bottom:0; left:0; right:0; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-size:12px; overflow-y:scroll; z-index:9999; padding:10px; pointer-events:none; display:block;">
+        === 디버그 모드 시작 ===<br>
+    </div>
+
     <!-- Kakao Maps SDK -->
     <script type="text/javascript"
         src="//dapi.kakao.com/v2/maps/sdk.js?appkey=33fd7d219effdab9e30ef2bab36bab86&libraries=services"></script>
-    <script src="app.js?v=20260211_kakao_final"></script>
+    <script src="app.js?v=20260211_debug_v1"></script>
 </body>
 
 </html>

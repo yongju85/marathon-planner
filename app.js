@@ -1,3 +1,19 @@
+// 디버그 로깅 함수
+function logToScreen(msg) {
+    const consoleDiv = document.getElementById('debug-console');
+    if (consoleDiv) {
+        consoleDiv.innerHTML += `<div>${msg}</div>`;
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+    console.log(msg); // 원래 콘솔에도 출력
+}
+
+// 에러 로깅
+window.onerror = function (msg, url, line) {
+    logToScreen(`❌ ERROR: ${msg} (${line})`);
+    return false;
+};
+
 // Kakao Maps 전역 변수
 let map;
 let ps; // 장소 검색 객체
@@ -29,13 +45,14 @@ window.onload = function () {
     // 2. 지도 API 로드 시도
     if (typeof kakao === 'undefined' || !kakao.maps) {
         console.error('Kakao Maps API 로드 실패');
+        logToScreen('❌ Kakao Maps API 로드 실패 (kakao 객체 없음)');
         document.getElementById('map').innerHTML = '<div style="padding:20px; text-align:center; color:red;">지도를 불러올 수 없습니다.<br>(도메인 등록을 확인해주세요)</div>';
         return;
     }
 
-
-
+    logToScreen('📡 Kakao Maps 로드 시도...');
     kakao.maps.load(function () {
+        logToScreen('✅ Kakao Maps 로드 성공! initMap 실행');
         initMap();
     });
 };
