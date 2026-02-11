@@ -1146,3 +1146,132 @@ select:focus {
         gap: 5px;
     }
 }
+
+/* ==================== 모바일 최적화 ==================== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+
+    /* 탭 메뉴: 2열 그리드 */
+    .menu-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        padding: 12px 5px;
+        font-size: 14px;
+        width: 100%;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    /* 지도 높이 조정 (화면 절반) */
+    #map-container {
+        height: 50vh;
+        min-height: 400px;
+        border-radius: 12px;
+    }
+
+    /* 컨트롤 패널 */
+    .control-panel,
+    .pace-container,
+    .weather-panel,
+    .route-info {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    /* 입력창 및 버튼 터치 영역 확대 */
+    input,
+    select,
+    button {
+        min-height: 44px;
+        /* 최소 터치 영역 */
+        font-size: 16px;
+        /* iOS 자동 확대 방지 */
+    }
+
+    .search-btn,
+    .time-btn,
+    .small-btn,
+    .save-btn,
+    .delete-btn {
+        padding: 12px;
+    }
+
+    /* 페이스 계산기 - 세로 배치 */
+    .pace-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .pace-card {
+        padding: 15px;
+    }
+
+    .pace-card .input-group input {
+        font-size: 20px;
+        padding: 12px;
+    }
+
+    .preset-buttons {
+        flex-wrap: wrap;
+    }
+
+    .preset-buttons button {
+        flex: 1 1 40%;
+        /* 2개씩 배치 */
+        padding: 10px;
+    }
+
+    /* 시간 입력창 */
+    .time-inputs {
+        justify-content: center;
+    }
+
+    .time-input-group input {
+        width: 60px;
+        font-size: 18px;
+    }
+
+    /* 결과 그리드: 2열 변경 */
+    .result-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .result-value {
+        font-size: 18px;
+    }
+
+    /* 저장된 코스 목록: 1열 */
+    .saved-routes-list {
+        grid-template-columns: 1fr;
+    }
+
+    .saved-route-left {
+        height: 180px;
+    }
+
+    /* 날씨 정보 */
+    .weather-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 터치 제스처 최적화 */
+button,
+input,
+select,
+textarea {
+    touch-action: manipulation;
+}
