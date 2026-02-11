@@ -14,16 +14,29 @@ let raceRecords = [];
 let selectedStartCoords = null; // {lat, lon}
 let selectedEndCoords = null;   // {lat, lon}
 
-// SDK 로드 확인 및 초기화 (통합 버전)
 window.onload = function () {
-    if (typeof kakao === 'undefined' || !kakao.maps) {
-        alert('Kakao Maps API가 로드되지 않았습니다. 인터넷 연결이나 앱 키를 확인해주세요.');
-        return;
-    }
-    kakao.maps.load(function () {
-        initMap();
+    // 1. UI 이벤트 리스너 먼저 등록 (지도 로딩 실패해도 버튼은 작동하게)
+    try {
         setupEventListeners();
         setDefaultTime();
+    } catch (e) {
+        console.error('초기화 중 오류 발생:', e);
+    }
+
+    // 3. 초기 탭 설정 (빈 화면 방지 - 지도 로드 여부와 무관하게 실행)
+    showTab('weather');
+
+    // 2. 지도 API 로드 시도
+    if (typeof kakao === 'undefined' || !kakao.maps) {
+        console.error('Kakao Maps API 로드 실패');
+        document.getElementById('map').innerHTML = '<div style="padding:20px; text-align:center; color:red;">지도를 불러올 수 없습니다.<br>(도메인 등록을 확인해주세요)</div>';
+        return;
+    }
+
+
+
+    kakao.maps.load(function () {
+        initMap();
     });
 };
 
@@ -290,18 +303,65 @@ function setupEventListeners() {
         });
     });
 
-    const searchStartBtn = document.getElementById('search-btn');
+    const searchStartBtn = document.getElementById('planner-search-start');
     if (searchStartBtn) {
         searchStartBtn.addEventListener('click', () => searchLocation('start'));
     }
-    const searchEndBtn = document.getElementById('search-end-btn');
+    const searchEndBtn = document.getElementById('planner-search-end');
     if (searchEndBtn) {
         searchEndBtn.addEventListener('click', () => searchLocation('end'));
     }
 
-    // 날씨 조회 버튼
-    const checkWeatherBtn = document.getElementById('check-weather-btn');
+    // 지도에서 선택 버튼
+    const pickStartBtn = document.getElementById('planner-pick-start');
+    if (pickStartBtn) pickStartBtn.addEventListener('click', () => startMapSelection('start'));
+
+    const pickEndBtn = document.getElementById('planner-pick-end');
+    if (pickEndBtn) pickEndBtn.addEventListener('click', () => startMapSelection('end'));
+
+    // 날씨 시간 단축 버튼 (현재, 오늘 18시, 내일 7시)
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            // 버튼 스타일 초기화
+            document.querySelectorAll('.time-btn').forEach(b => {
+                b.style.borderColor = '#e0e0e0';
+                b.style.color = '#555';
+                b.style.background = 'white';
+            });
+            // 선택된 버튼 활성화
+            this.style.borderColor = '#667eea';
+            this.style.color = '#667eea';
+            this.style.background = '#f0f4ff';
+
+            const type = this.getAttribute('data-time');
+            const timeInput = document.getElementById('weather-time');
+            const now = new Date();
+
+            if (type === 'today_evening') {
+                now.setHours(18, 0, 0, 0);
+            } else if (type === 'tomorrow_morning') {
+                now.setDate(now.getDate() + 1);
+                now.setHours(7, 0, 0, 0);
+            }
+            // type === 'now'는 그냥 현재 시간 그대로 사용
+
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            timeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        });
+    });
+
+    // 날씨 조회 버튼 (메인 조회 버튼)
+    const checkWeatherBtn = document.getElementById('weather-check-btn');
     if (checkWeatherBtn) checkWeatherBtn.addEventListener('click', checkWeatherAndDust);
+
+    // 날씨 검색 돋보기 버튼
+    const weatherSearchBtn = document.getElementById('weather-search-btn');
+    if (weatherSearchBtn) weatherSearchBtn.addEventListener('click', checkWeatherAndDust);
 
     // 거리 입력 시 시간/페이스 자동 업데이트 (기존 로직)
     const targetDistInput = document.getElementById('target-distance');
@@ -412,17 +472,30 @@ function setSameAsStart() {
 }
 
 function showTab(tabName) {
+    // 1. 모든 탭 컨텐츠와 버튼 비활성화
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
-    document.getElementById(tabName).classList.add('active');
-    document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+    // 2. 선택된 탭 활성화 (ID에 -section이 붙어있음)
+    const contentId = tabName.endsWith('-section') ? tabName : tabName + '-section';
+    const content = document.getElementById(contentId);
 
-    // 지도 탭으로 전환 시 리사이즈 (카카오맵 깨짐 방지)
+    if (content) {
+        content.classList.add('active');
+    } else {
+        console.error(`Tab content not found: ${contentId}`);
+    }
+
+    // 3. 버튼 활성화
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    if (btn) {
+        btn.classList.add('active');
+    }
+
+    // 4. 지도 탭으로 전환 시 리사이즈
     if (tabName === 'planner' && map) {
         setTimeout(() => {
             map.relayout();
-            // 중심점 유지
             if (selectedStartCoords) {
                 map.setCenter(new kakao.maps.LatLng(selectedStartCoords.lat, selectedStartCoords.lon));
             } else {
