@@ -4,86 +4,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏃 조깅 코스 플래너옒??/title>
+    <title>🏃 조깅 코스 플래너</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css?v=1.2" />
 </head>
 
 <body>
     <div class="container">
-        <h1>🏃 조깅 코스 플래너옒??/h1>
+        <h1>🏃 조깅 코스 플래너</h1>
 
-        <!-- 硫붾돱 ??-->
+        <!-- 메뉴 탭 -->
         <div class="menu-tabs">
-            <button class="tab-btn active" data-tab="weather">?뙡截??좎뵪/誘몄꽭癒쇱?</button>
-            <button class="tab-btn" data-tab="planner" style="display: none;">?뿺截?肄붿뒪 ?뚮옒??/button>
-            <button class="tab-btn" data-tab="schedule">?뱟 ????쇱젙</button>
-            <button class="tab-btn" data-tab="pace">?깍툘 ?섏씠??怨꾩궛湲?/button>
-            <button class="tab-btn" data-tab="records">?룆 ???湲곕줉??/button>
+            <button class="tab-btn active" data-tab="weather">🌦️ 날씨/미세먼지</button>
+            <button class="tab-btn" data-tab="planner" style="display: none;">🗺️ 코스 플래너</button>
+            <button class="tab-btn" data-tab="schedule">📅 대회 일정</button>
+            <button class="tab-btn" data-tab="pace">⏱️ 페이스 계산기</button>
+            <button class="tab-btn" data-tab="records">🏅 대회 기록장</button>
         </div>
 
-        <!-- ?좎뵪/誘몄꽭癒쇱? ?뱀뀡 -->
+        <!-- 날씨/미세먼지 섹션 -->
         <div id="weather-section" class="tab-content active">
             <div class="main-grid">
                 <div class="control-panel">
-                    <h2 style="margin-bottom: 20px; color: #667eea;">?좎뵪 議고쉶</h2>
+                    <h2 style="margin-bottom: 20px; color: #667eea;">날씨 조회</h2>
                     <div class="form-group">
-                        <label>?뱧 吏??寃??/label>
+                        <label>📍 지역 검색</label>
                         <div class="location-group">
-                            <input type="text" id="weather-location" placeholder="?? ?쒖슱 媛뺣궓援? 寃쎄린 ?뚯＜?? value="寃쎄린 ?뚯＜??>
-                            <button id="weather-search-btn" class="search-btn"
-                                onclick="checkWeatherAndDust()">?뵇</button>
+                            <input type="text" id="weather-location" placeholder="예: 서울 강남구, 경기 파주시" value="경기 파주시">
+                            <button id="weather-search-btn" class="search-btn">🔍</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>???쒓컙 ?ㅼ젙</label>
+                        <label>⏰ 시간 설정</label>
                         <div class="time-shortcuts">
-                            <button type="button" class="time-btn" data-time="now">?꾩옱</button>
-                            <button type="button" class="time-btn" data-time="today_evening">?뙔 ?ㅻ뒛 18??/button>
-                            <button type="button" class="time-btn" data-time="tomorrow_morning">?截??댁씪 7??/button>
+                            <button type="button" class="time-btn" data-time="now">현재</button>
+                            <button type="button" class="time-btn" data-time="today_evening">🌙 오늘 18시</button>
+                            <button type="button" class="time-btn" data-time="tomorrow_morning">☀️ 내일 7시</button>
                         </div>
                         <input type="datetime-local" id="weather-time">
                     </div>
-                    <button id="weather-check-btn" class="generate-btn" style="background: #20bf6b;"
-                        onclick="checkWeatherAndDust()">
-                        ?뙟截?議고쉶?섍린
+                    <button id="weather-check-btn" class="generate-btn" style="background: #20bf6b;">
+                        🌤️ 조회하기
                     </button>
                 </div>
 
                 <div id="weather-display-panel"
                     style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #666; min-height: 400px;">
                     <div id="weather-placeholder">
-                        <h3>醫뚯륫?먯꽌 吏??낵 ?쒓컙???좏깮?섍퀬<br>議고쉶 踰꾪듉???뚮윭二쇱꽭??</h3>
+                        <h3>좌측에서 지역과 시간을 선택하고<br>조회 버튼을 눌러주세요.</h3>
                     </div>
                     <div id="weather-results" style="display: none; width: 100%;">
-                        <!-- 湲곗삩/?좎뵪/?듬룄/?띿냽 (4??洹몃━?? -->
-                        <div class="weather-info" >
+                        <!-- 기온/날씨/습도/풍속 (4열 그리드) -->
+                        <div class="weather-info">
                             <div class="weather-card">
-                                <h3>?뙜截?湲곗삩</h3>
+                                <h3>🌡️ 기온</h3>
                                 <div class="value" id="temp-val" style="font-size: 20px;">-</div>
                             </div>
                             <div class="weather-card">
-                                <h3>?곻툘 ?좎뵪</h3>
+                                <h3>☁️ 날씨</h3>
                                 <div class="value" id="weather-desc"
                                     style="font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center;">
                                     -</div>
                             </div>
                             <div class="weather-card">
-                                <h3>?뮛 ?듬룄</h3>
+                                <h3>💧 습도</h3>
                                 <div class="value" id="humidity-val" style="font-size: 20px;">-</div>
                             </div>
                             <div class="weather-card">
-                                <h3>?뮜 ?띿냽</h3>
+                                <h3>💨 풍속</h3>
                                 <div class="value" id="wind-val" style="font-size: 20px;">-</div>
                             </div>
                         </div>
 
-                        <!-- 誘몄꽭癒쇱? ?좏샇???곸뿭 (?숈쟻 ?앹꽦 ?덉젙?댁?留?而⑦뀒?대꼫 ?뺣낫) -->
+                        <!-- 미세먼지 신호등 영역 -->
                         <div id="dust-traffic-light-area" style="width: 100%;">
-                            <!-- app.js?먯꽌 ?숈쟻?쇰줈 梨꾩썙吏?-->
                             <div class="weather-card"
                                 style="width: 100%; min-height: 150px; background: #f0f0f0; color: #ccc; display: flex; align-items: center; justify-content: center;">
-                                誘몄꽭癒쇱? ?뺣낫瑜?遺덈윭?ㅻ뒗 以?..
+                                미세먼지 정보를 불러오는 중..
                             </div>
                         </div>
                     </div>
@@ -91,202 +88,199 @@
             </div>
         </div>
 
-        <!-- ????쇱젙 (D-Day) ?뱀뀡 -->
+        <!-- 대회 일정 (D-Day) 섹션 -->
         <div id="schedule-section" class="tab-content">
             <div class="main-grid">
                 <div class="control-panel">
-                    <h2 style="margin-bottom: 20px; color: #667eea;">????쇱젙 愿由?/h2>
+                    <h2 style="margin-bottom: 20px; color: #667eea;">대회 일정 관리</h2>
                     <input type="hidden" id="editing-schedule-id">
                     <div class="form-group">
-                        <label>?룇 ??뚮챸</label>
-                        <input type="text" id="schedule-name" placeholder="?? JTBC ?쒖슱 留덈씪??>
+                        <label>🏅 대회명</label>
+                        <input type="text" id="schedule-name" placeholder="예: JTBC 서울 마라톤">
                     </div>
                     <div class="form-group">
-                        <label>?룂 ???醫낅쪟</label>
+                        <label>🏃 대회 종류</label>
                         <select id="schedule-type"
                             style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
                             <option value="Full">Full (42.195km)</option>
                             <option value="Half">Half (21.0975km)</option>
                             <option value="10km">10km</option>
                             <option value="5km">5km</option>
-                            <option value="湲고?">湲고?</option>
+                            <option value="기타">기타</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>?깍툘 紐⑺몴 ?쒓컙 (HH:MM:SS)</label>
-                        <input type="text" id="schedule-target" placeholder="?? 03:59:59" oninput="previewPace()">
+                        <label>⏱️ 목표 시간 (HH:MM:SS)</label>
+                        <input type="text" id="schedule-target" placeholder="예: 03:59:59" oninput="previewPace()">
                         <div id="pace-preview"
                             style="font-size: 11px; color: #667eea; margin-top: 5px; font-weight: bold;"></div>
                     </div>
                     <div class="form-group">
-                        <label>?븰 ???異쒕컻 ?쒓컙</label>
+                        <label>📅 대회 출발 시간</label>
                         <input type="datetime-local" id="schedule-date">
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button id="add-schedule-btn" class="generate-btn" style="background: #667eea; flex: 2;"
                             onclick="addSchedule()">
-                            ???쇱젙 異붽??섍린
+                            ➕ 일정 추가하기
                         </button>
                         <button id="cancel-schedule-edit-btn" class="reset-btn"
                             style="background: #a4b0be; flex: 1; display: none;" onclick="cancelScheduleEdit()">
-                            ??痍⑥냼
+                            ✖ 취소
                         </button>
                     </div>
                 </div>
 
                 <div id="schedule-list-panel"
                     style="background: white; border-radius: 15px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; min-height: 400px;">
-                    <h3 style="margin-bottom: 20px; text-align: left; color: #333;">?뱟 ?섏쓽 ????쇱젙</h3>
+                    <h3 style="margin-bottom: 20px; text-align: left; color: #333;">📅 나의 대회 일정</h3>
                     <div id="schedule-grid" class="record-grid">
-                        <!-- D-Day 移대뱶?ㅼ씠 ?ш린???뚮뜑留곷맖 -->
+                        <!-- D-Day 카드들이 명기됨 -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 肄붿뒪 ?뚮옒???뱀뀡 -->
+        <!-- 코스 플래너 섹션 -->
         <div id="planner-section" class="tab-content" style="display: none;">
             <div class="main-grid">
                 <div class="control-panel">
-                    <h2 style="margin-bottom: 20px; color: #667eea;">肄붿뒪 ?ㅼ젙</h2>
+                    <h2 style="margin-bottom: 20px; color: #667eea;">코스 설정</h2>
 
                     <div class="form-group">
-                        <label>?뱧 異쒕컻吏</label>
+                        <label>📍 출발지</label>
                         <div class="location-group">
-                            <input type="text" id="location" placeholder="?? ?쇰떦???댁젙?몄닔怨듭썝">
+                            <input type="text" id="location" placeholder="예: 일산호수공원">
                             <button id="planner-search-start" class="search-btn"
-                                onclick="searchLocation('start')">?뵇</button>
-                            <button id="planner-pick-start" class="search-btn" title="吏?꾩뿉???좏깮">?뿺截?/button>
+                                onclick="searchLocation('start')">🔍</button>
+                            <button id="planner-pick-start" class="search-btn" title="지도에서 선택">🗺️</button>
                         </div>
                     </div>
 
                     <div class="form-group" id="end-location-group">
-                        <label>?뢾 ?꾩갑吏</label>
+                        <label>🏁 도착지</label>
                         <div class="location-group">
-                            <input type="text" id="location-end" placeholder="?? ?쇱궛?몄닔怨듭썝">
+                            <input type="text" id="location-end" placeholder="예: 일산호수공원">
                             <button id="planner-search-end" class="search-btn"
-                                onclick="searchLocation('end')">?뵇</button>
-                            <button id="planner-pick-end" class="search-btn" title="吏?꾩뿉???좏깮">?뿺截?/button>
+                                onclick="searchLocation('end')">🔍</button>
+                            <button id="planner-pick-end" class="search-btn" title="지도에서 선택">🗺️</button>
                         </div>
                         <button id="set-same-start-btn" class="small-btn"
-                            style="margin-top: 5px; width: 100%; font-size: 12px; padding: 5px;">?뱧 異쒕컻吏? ?숈씪?섍쾶
-                            ?ㅼ젙</button>
+                            style="margin-top: 5px; width: 100%; font-size: 12px; padding: 5px;">📍 출발지와 동일하게
+                            설정</button>
                     </div>
 
                     <div class="form-group">
-                        <label>?뱩 紐⑺몴 嫄곕━ (km)</label>
-                        <input type="number" id="distance" placeholder="?? 5" step="0.1">
+                        <label>📏 목표 거리 (km)</label>
+                        <input type="number" id="distance" placeholder="예: 5" step="0.1">
                         <p id="distance-info" style="font-size: 12px; color: #666; margin-top: 5px; display:none;">*
-                            異쒕컻/?꾩갑吏媛 ?ㅻⅤ硫?嫄곕━???먮룞 怨꾩궛?⑸땲??</p>
+                            출발/도착지가 다르면 거리가 자동 계산됩니다.</p>
                     </div>
 
                     <div class="form-group">
-                        <label>?룂 ?섏씠??(遺?km)</label>
+                        <label>🔄 코스 형태</label>
                         <div class="route-type">
                             <div class="route-btn active" data-type="circular">
-                                狩??먰삎<br><small>異쒕컻???뚭?</small>
+                                🔄 원형<br><small>출발점 회귀</small>
                             </div>
                             <div class="route-btn" data-type="point-to-point">
-                                ?∽툘 吏곸꽑<br><small>A ??B</small>
+                                ➡️ 직선<br><small>A to B</small>
                             </div>
                             <div class="route-btn" data-type="out-and-back">
-                                ?뷂툘 ?뺣났<br><small>A ??B ??A</small>
+                                ↩️ 왕복<br><small>A to B to A</small>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>??議곌퉭 ?쒓컙</label>
+                        <label>⏰ 조깅 시간</label>
                         <input type="datetime-local" id="jogging-time">
                     </div>
 
                     <div class="button-group" style="display: flex; gap: 10px;">
                         <button id="course-generate-btn" class="generate-btn" style="flex: 2;">
-                            ?? 肄붿뒪 ?앹꽦?섍린
+                            🪄 코스 생성하기
                         </button>
                         <button id="app-reset-btn" class="reset-btn" style="flex: 1; background: #a4b0be;">
-                            ?봽 珥덇린??                        </button>
+                            🔄 초기화
+                        </button>
                     </div>
 
                     <div class="loading">
                         <div class="spinner"></div>
-                        <div>肄붿뒪 ?앹꽦 以?..</div>
+                        <div>코스 생성 중..</div>
                     </div>
                 </div>
 
                 <div id="map-container">
-                    <div id="map-guidance" class="map-guidance">?뱧 異쒕컻吏瑜??좏깮?댁＜?몄슂</div>
+                    <div id="map-guidance" class="map-guidance">📍 출발지를 선택해주세요</div>
                     <div id="map"></div>
                 </div>
             </div>
 
             <div class="weather-panel">
-                <h2 style="margin-bottom: 15px; color: #667eea;">?곻툘 ?좎뵪 ?뺣낫</h2>
+                <h2 style="margin-bottom: 15px; color: #667eea;">🌦️ 날씨 정보</h2>
                 <div class="weather-info" id="weather-info"></div>
             </div>
 
-            <!-- records-section was here, moving it out -->
-
             <div class="route-info">
-                <h2 style="margin-bottom: 15px; color: #667eea;">?뱤 肄붿뒪 ?뺣낫</h2>
+                <h2 style="margin-bottom: 15px; color: #667eea;">📏 코스 정보</h2>
                 <div class="route-stats" id="route-stats"></div>
-                <!-- ???踰꾪듉 (?숈쟻?쇰줈 ?쒖떆?? -->
                 <div id="save-btn-container" style="text-align: center; margin-top: 20px; display: none;">
-                    <button class="save-btn" onclick="saveCurrentRoute()">?뮶 ?꾩옱 肄붿뒪 ??ν븯湲?/button>
+                    <button class="save-btn" onclick="saveCurrentRoute()">💾 현재 코스 저장하기</button>
                 </div>
             </div>
 
-            <!-- ??λ맂 肄붿뒪 紐⑸줉 -->
             <div class="saved-routes-panel">
-                <h2 style="margin-bottom: 15px; color: #667eea;">?뱛 ??λ맂 肄붿뒪</h2>
+                <h2 style="margin-bottom: 15px; color: #667eea;">📂 저장된 코스</h2>
                 <div id="saved-routes-list" class="saved-routes-list">
-                    <div class="empty-message">??λ맂 肄붿뒪媛 ?놁뒿?덈떎.</div>
+                    <div class="empty-message">저장된 코스가 없습니다.</div>
                 </div>
             </div>
         </div>
 
-        <!-- ???湲곕줉 ?뱀뀡 -->
+        <!-- 대회 기록장 섹션 -->
         <div id="records-section" class="tab-content">
             <div class="records-container">
                 <div class="record-form-card">
-                    <h2 style="margin-bottom: 20px; color: #667eea;">?룆 ?덈줈?????湲곕줉 ?깅줉</h2>
+                    <h2 style="margin-bottom: 20px; color: #667eea;">🏅 새로운 대회 기록 등록</h2>
                     <input type="hidden" id="editing-record-id">
                     <div class="records-form-grid">
                         <div class="form-group">
-                            <label>?뢾 ??뚮챸</label>
-                            <input type="text" id="race-name" placeholder="?? JTBC ?쒖슱 留덈씪??>
+                            <label>🏁 대회명</label>
+                            <input type="text" id="race-name" placeholder="예: JTBC 서울 마라톤">
                         </div>
                         <div class="form-group">
-                            <label>?뱟 ????쇱옄</label>
+                            <label>📅 대회 일자</label>
                             <input type="date" id="race-date">
                         </div>
                         <div class="form-group">
-                            <label>?뱧 吏??/label>
-                            <input type="text" id="race-location" placeholder="?? ?쒖슱 留덊룷援?>
+                            <label>📍 지역</label>
+                            <input type="text" id="race-location" placeholder="예: 서울 마포구">
                         </div>
                         <div class="form-group">
-                            <label>?룂 肄붿뒪 醫낅쪟</label>
+                            <label>🏃 코스 종류</label>
                             <select id="race-type">
                                 <option value="5">5km</option>
                                 <option value="10">10km</option>
-                                <option value="21.0975">?섑봽 留덈씪??/option>
-                                <option value="42.195">?肄붿뒪</option>
+                                <option value="21.0975">하프 마라톤</option>
+                                <option value="42.195">풀코스</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>?몷 李⑹슜 ?щ떇??/label>
-                            <input type="text" id="race-shoes" placeholder="?? ?섏씠???뚰뙆?뚮씪??3">
+                            <label>👟 착용 러닝화</label>
+                            <input type="text" id="race-shoes" placeholder="예: 나이키 알파플라이 3">
                         </div>
                         <div class="form-group">
-                            <label>?깍툘 ?꾩＜ 湲곕줉 (HH:MM:SS)</label>
+                            <label>⏱️ 완주 기록 (HH:MM:SS)</label>
                             <div style="display: flex; gap: 5px;">
-                                <input type="number" id="race-h" placeholder="?? min="0" max="99">
-                                <input type="number" id="race-m" placeholder="遺? min="0" max="59">
-                                <input type="number" id="race-s" placeholder="珥? min="0" max="59">
+                                <input type="number" id="race-h" placeholder="시" min="0" max="99">
+                                <input type="number" id="race-m" placeholder="분" min="0" max="59">
+                                <input type="number" id="race-s" placeholder="초" min="0" max="59">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>?뱶 湲곕줉利??ъ쭊</label>
+                            <label>🖼️ 기록증 사진</label>
                             <input type="file" id="race-photo" accept="image/*">
                             <div id="photo-preview-container" style="margin-top: 10px; display: none;">
                                 <img id="photo-preview" src=""
@@ -294,97 +288,98 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>?뱷 硫붾え/肄붾찘??/label>
-                            <textarea id="race-memo" placeholder="????뚭컧?대굹 湲곗뼲?섍퀬 ?띠? ?먯쓣 ?곸뼱蹂댁꽭??"
+                            <label>📝 메모/코멘트</label>
+                            <textarea id="race-memo" placeholder="대회 소감이나 기억하고 싶은 점을 적어보세요"
                                 style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: none;"></textarea>
                         </div>
                     </div>
                     <div class="button-group" style="display: flex; gap: 10px; margin-top: 20px;">
                         <button id="save-race-btn" class="generate-btn"
                             style="background: #20bf6b; flex: 2; margin-top: 0;">
-                            ?뮶 湲곕줉 ??ν븯湲?                        </button>
+                            💾 기록 저장하기
+                        </button>
                         <button id="cancel-edit-btn" class="reset-btn"
                             style="background: #a4b0be; flex: 1; display: none;" onclick="cancelEdit()">
-                            ??痍⑥냼
+                            ✖ 취소
                         </button>
                     </div>
                 </div>
 
                 <div class="records-history">
-                    <h2 style="margin-bottom: 20px; color: #667eea;">?뱛 ?섏쓽 ????대젰</h2>
+                    <h2 style="margin-bottom: 20px; color: #667eea;">🏅 나의 대회 이력</h2>
                     <div id="race-records-list" class="race-records-grid">
-                        <!-- 湲곕줉 移대뱶?ㅼ씠 ?ш린???뚮뜑留곷맖 -->
+                        <!-- 기록 카드들이 명기됨 -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ?섏씠??怨꾩궛湲??뱀뀡 -->
+        <!-- 페이스 계산기 섹션 -->
         <div id="pace-section" class="tab-content">
             <div class="pace-container">
-                <h2 style="margin-bottom: 25px; color: #667eea; text-align: center;">?깍툘 留덈씪???섏씠??怨꾩궛湲?/h2>
+                <h2 style="margin-bottom: 25px; color: #667eea; text-align: center;">⏱️ 마라톤 페이스 계산기</h2>
 
                 <div class="pace-grid">
-                    <!-- 嫄곕━ ?낅젰 -->
+                    <!-- 거리 입력 -->
                     <div class="pace-card">
-                        <h3>?뱩 嫄곕━</h3>
+                        <h3>📏 거리</h3>
                         <div class="input-group">
                             <input type="number" id="calc-distance" placeholder="0" step="0.01">
                             <select id="distance-unit">
                                 <option value="km">km</option>
                                 <option value="m">m</option>
-                                <option value="mile">留덉씪</option>
+                                <option value="mile">마일</option>
                             </select>
                         </div>
                         <div class="preset-buttons">
                             <button type="button" data-km="5">5K</button>
                             <button type="button" data-km="10">10K</button>
-                            <button type="button" data-km="21.0975">?섑봽</button>
-                            <button type="button" data-km="42.195">?</button>
+                            <button type="button" data-km="21.0975">하프</button>
+                            <button type="button" data-km="42.195">풀</button>
                         </div>
                     </div>
 
-                    <!-- ?쒓컙 ?낅젰 -->
+                    <!-- 시간 입력 -->
                     <div class="pace-card">
-                        <h3>???뚯슂 ?쒓컙</h3>
+                        <h3>⏱️ 소요 시간</h3>
                         <div class="time-inputs">
                             <div class="time-input-group">
                                 <input type="number" id="calc-hours" placeholder="0" min="0" max="99">
-                                <label>?쒓컙</label>
+                                <label>시간</label>
                             </div>
                             <span class="time-separator">:</span>
                             <div class="time-input-group">
                                 <input type="number" id="calc-minutes" placeholder="0" min="0" max="59">
-                                <label>遺?/label>
+                                <label>분</label>
                             </div>
                             <span class="time-separator">:</span>
                             <div class="time-input-group">
                                 <input type="number" id="calc-seconds" placeholder="0" min="0" max="59">
-                                <label>珥?/label>
+                                <label>초</label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ?섏씠???낅젰 -->
+                    <!-- 페이스 입력 -->
                     <div class="pace-card">
-                        <h3>?몷 ?섏씠??/h3>
+                        <h3>🏃 페이스</h3>
                         <div class="time-inputs">
                             <div class="time-input-group">
                                 <input type="number" id="calc-pace-min" placeholder="0" min="0" max="59">
-                                <label>遺?/label>
+                                <label>분</label>
                             </div>
                             <span class="time-separator">:</span>
                             <div class="time-input-group">
                                 <input type="number" id="calc-pace-sec" placeholder="0" min="0" max="59">
-                                <label>珥?/label>
+                                <label>초</label>
                             </div>
                             <span class="pace-unit">/km</span>
                         </div>
                     </div>
 
-                    <!-- ?쒖냽 ?낅젰 -->
+                    <!-- 시속 입력 -->
                     <div class="pace-card">
-                        <h3>?? ?쒖냽</h3>
+                        <h3>⚡ 시속</h3>
                         <div class="input-group">
                             <input type="number" id="calc-speed" placeholder="0" step="0.1">
                             <span class="unit-label">km/h</span>
@@ -392,46 +387,46 @@
                     </div>
                 </div>
 
-                <!-- 寃곌낵 ?쒖떆 -->
+                <!-- 결과 표시 -->
                 <div class="result-panel" id="result-panel">
-                    <h3>?뱤 怨꾩궛 寃곌낵</h3>
+                    <h3>📊 계산 결과</h3>
                     <div class="result-grid" id="result-grid">
                         <div class="result-item">
-                            <span class="result-label">嫄곕━</span>
+                            <span class="result-label">거리</span>
                             <span class="result-value" id="result-distance">-</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label">?뚯슂 ?쒓컙</span>
+                            <span class="result-label">소요 시간</span>
                             <span class="result-value" id="result-time">-</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label">?섏씠??/span>
+                            <span class="result-label">페이스</span>
                             <span class="result-value" id="result-pace">-</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label">?쒖냽</span>
+                            <span class="result-label">시속</span>
                             <span class="result-value" id="result-speed">-</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 援ш컙蹂??덉긽 湲곕줉 -->
+                <!-- 구간별 예상 기록 -->
                 <div class="splits-panel" id="splits-panel" style="display: none;">
-                    <h3>?뢾 援ш컙蹂??덉긽 湲곕줉</h3>
+                    <h3>🏁 구간별 예상 기록</h3>
                     <div class="splits-grid" id="splits-grid"></div>
                 </div>
 
-                <button id="calc-reset-btn" class="reset-btn">?봽 珥덇린??/button>
+                <button id="calc-reset-btn" class="reset-btn">🔄 초기화</button>
             </div>
         </div>
     </div>
 
     <!-- html2canvas -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <!-- 紐⑤컮???붾쾭源낆슜 肄섏넄 (臾몄젣 ?닿껐 ??style="display:none"?쇰줈 蹂寃??덉젙) -->
+    <!-- 모바일 디버깅용 콘솔 (숨김 처리) -->
     <div id="debug-console"
         style="position:fixed; bottom:0; left:0; right:0; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-size:12px; overflow-y:scroll; z-index:9999; padding:10px; pointer-events:none; display:none;">
-        === ?붾쾭洹?紐⑤뱶 ?쒖옉 ===<br>
+        === 디버그 모드 시작 ===<br>
     </div>
 
     <!-- Kakao Maps SDK -->
