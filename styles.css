@@ -1,4 +1,4 @@
-* {
+﻿* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -229,9 +229,7 @@ select:focus {
     display: block;
 }
 
-.weather-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.weather-info { grid-template-columns: repeat(4, 1fr);
     gap: 15px;
     margin-top: 15px;
 }
@@ -1303,90 +1301,33 @@ textarea {
 }
 
 /* --- 모바일 보기 시뮬레이션 (Phone Frame) --- */
-body.mobile-mode {
-    background: #2f3542 !important;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* 세로 중앙 정렬 */
-    min-height: 100vh;
-    padding: 20px 0;
-    overflow: hidden;
-    /* 배경 스크롤 방지 */
-}
 
-body.mobile-mode .container {
-    width: 375px;
-    height: 812px;
-    /* iPhone 13 Mini size */
-    background: white;
-    border: 12px solid #333;
-    /* 폰 테두리 */
-    border-radius: 40px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
-    overflow-x: hidden;
-    position: relative;
-    padding: 20px;
-    scroll-behavior: smooth;
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+
+
 
 /* 모바일 모드일 때 스크롤바 숨기기 (선택 사항) */
-body.mobile-mode .container::-webkit-scrollbar {
-    width: 5px;
-}
 
-body.mobile-mode .container::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
-}
+
+
 
 /* 모바일 모드 강제 스타일 적용 */
-body.mobile-mode h1 {
-    font-size: 1.8em;
-    margin-bottom: 20px;
-}
 
-body.mobile-mode .main-grid,
-body.mobile-mode .pace-grid,
-body.mobile-mode .records-form-grid,
-body.mobile-mode .race-records-grid,
-body.mobile-mode .result-grid,
-body.mobile-mode .weather-info,
-body.mobile-mode .saved-routes-list {
-    grid-template-columns: 1fr !important;
-    gap: 15px;
-}
 
-body.mobile-mode .menu-tabs {
-    flex-direction: column;
-    gap: 8px;
-}
 
-body.mobile-mode .tab-btn {
-    width: 100%;
-    padding: 12px;
-}
 
-body.mobile-mode #map-container {
-    height: 350px;
-}
 
-body.mobile-mode .pace-card .input-group input {
-    font-size: 20px;
-}
 
-body.mobile-mode .result-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-}
+
+
+
+
+
+
+
 
 /* 모바일 보기 버튼 위치 조정 */
-body.mobile-mode #mobile-toggle-btn {
-    top: auto;
-    bottom: 20px;
-}
-/* �̼����� ��ȣ�� ��Ÿ�� */
+
+/* �̼����� ��ȣ�� ��Ÿ�� */
 .dust-guidance-box {
     width: 100%;
     padding: 20px;
@@ -1449,7 +1390,7 @@ body.mobile-mode #mobile-toggle-btn {
     font-weight: 700;
 }
 
-/* ��ȣ�� �ܰ躰 ���� (Gradients) */
+/* ��ȣ�� �ܰ躰 ���� (Gradients) */
 .dust-good {
     background: linear-gradient(135deg, #20bf6b, #0eb87f);
 }
@@ -1467,12 +1408,8 @@ body.mobile-mode #mobile-toggle-btn {
     background: linear-gradient(135deg, #eb3b5a, #fc5c65);
 }
 
-/* ����� ��� ���� */
-body.mobile-mode .guidance-message {
-    font-size: 18px;
-}
+/* ����� ��� ���� */
 
-body.mobile-mode .dust-value {
-    font-size: 18px;
-}
+
+
 
