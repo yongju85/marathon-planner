@@ -26,7 +26,6 @@ let customMarkers = []; // 거리 표시 마커들 (1km, 2km...)
 let activePickTarget = null; // '출발지' 또는 '도착지' 선택 모드
 
 // 전역 변수 (페이스 계산기 및 기타)
-let raceRecords = [];
 let selectedStartCoords = null; // {lat, lon}
 let selectedEndCoords = null;   // {lat, lon}
 
@@ -267,7 +266,8 @@ function addDirectionMarkers(coords, routeType) {
     customMarkers.forEach(m => m.setMap(null));
     customMarkers = [];
 
-    const totalDist = parseFloat(document.getElementById('target-distance').value);
+    const distEl = document.getElementById('distance') || document.getElementById('target-distance');
+    const totalDist = distEl ? parseFloat(distEl.value) : 0;
 
     // 왕복/회귀 코스는 반환점 표시
     if (routeType === 'round' || routeType === 'return') {
@@ -381,7 +381,7 @@ function setupEventListeners() {
     if (weatherSearchBtn) weatherSearchBtn.addEventListener('click', checkWeatherAndDust);
 
     // 거리 입력 시 시간/페이스 자동 업데이트 (기존 로직)
-    const targetDistInput = document.getElementById('target-distance');
+    const targetDistInput = document.getElementById('distance') || document.getElementById('target-distance');
     if (targetDistInput) {
         targetDistInput.addEventListener('input', updateEstimatedTime);
     }
@@ -428,6 +428,21 @@ function setupEventListeners() {
 
     const appResetBtn = document.getElementById('app-reset-btn');
     if (appResetBtn) appResetBtn.addEventListener('click', resetApp);
+
+    // 대회 기록장 이벤트 및 초기화
+    const saveRaceBtn = document.getElementById('save-race-btn');
+    if (saveRaceBtn) saveRaceBtn.addEventListener('click', saveRaceRecord);
+
+    const racePhotoInput = document.getElementById('race-photo');
+    if (racePhotoInput) racePhotoInput.addEventListener('change', handlePhotoSelect);
+
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEdit);
+
+    loadRaceRecordsFromStorage();
+
+    // 일정 관리 초기화
+    loadSchedules();
 
     // 경로 유형 버튼
     document.querySelectorAll('.route-btn').forEach(btn => {
@@ -540,6 +555,14 @@ function getTotalSeconds() { return (parseInt(document.getElementById('calc-hour
 function formatTime(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60); return h ? `${h}시간 ${m}분 ${sec}초` : m ? `${m}분 ${sec}초` : `${sec}초`; }
 function formatPace(s) { const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}'${sec.toString().padStart(2, '0')}"/km`; }
 
+function parseTimeToSeconds(timeStr) {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(':').map(Number);
+    if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    if (parts.length === 2) return (parts[0] * 60) + parts[1];
+    return 0;
+}
+
 function calculatePace() { const d = getDistanceInKm(), s = getTotalSeconds(); if (d > 0 && s > 0) { const p = s / d, sp = d / (s / 3600); updateResults(d, s, p, sp); generateSplits(p, d); } }
 function calculateFromPace() { const d = getDistanceInKm(), p = (parseInt(document.getElementById('calc-pace-min').value) || 0) * 60 + (parseInt(document.getElementById('calc-pace-sec').value) || 0); if (d > 0 && p > 0) { updateResults(d, p * d, p, 3600 / p); generateSplits(p, d); } }
 function calculateFromSpeed() { const d = getDistanceInKm(), sp = parseFloat(document.getElementById('calc-speed').value) || 0; if (d > 0 && sp > 0) { const p = 3600 / sp; updateResults(d, d / sp * 3600, p, sp); generateSplits(p, d); } }
@@ -549,47 +572,214 @@ function updateResults(d, t, p, s) { document.getElementById('result-distance').
 function generateSplits(p, d) { const g = document.getElementById('splits-grid'); g.innerHTML = ''; document.getElementById('splits-panel').style.display = 'block'; for (let i = 1; i <= Math.ceil(d); i++) { const div = document.createElement('div'); div.className = 'split-item'; div.innerHTML = `<span>${i}km</span><span>${formatTime(i * p)}</span>`; g.appendChild(div); } }
 function resetCalculator() { document.querySelectorAll('#pace-section input').forEach(i => i.value = ''); document.getElementById('splits-panel').style.display = 'none'; }
 
-// 날씨 API (OpenWeatherMap) - 기존 유지
+// 시간 포맷 헬퍼 (YYYY-MM-DD)
+function getLocalYMD(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// 날씨 API (Open-Meteo - 시간별 예보 지원)
 function checkWeatherAndDust() {
     const loc = document.getElementById('weather-location').value;
-    const apiKey = '930d6742588c22736427d142167c1301';
+    const timeVal = document.getElementById('weather-time').value;
 
-    // 날씨 (섭씨: units=metric)
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${loc}&appid=${apiKey}&units=metric&lang=kr`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.cod !== 200) {
-                alert('지역을 찾을 수 없습니다.');
-                return;
+    if (!loc || !timeVal) {
+        alert('지역과 시간을 선택해주세요.');
+        return;
+    }
+
+    logToScreen(`🌤️ ${loc} (${timeVal}) 정보 조회 중...`);
+
+    // 카카오 맵 서비스를 사용하여 좌표 검색
+    if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
+        const ps = new kakao.maps.services.Places();
+        ps.keywordSearch(loc, function (data, status) {
+            if (status === kakao.maps.services.Status.OK) {
+                const lat = data[0].y;
+                const lon = data[0].x;
+                const regionName = data[0].address_name || data[0].place_name;
+                fetchTimeBasedWeather(lat, lon, regionName, timeVal);
+            } else {
+                const geocoder = new kakao.maps.services.Geocoder();
+                geocoder.addressSearch(loc, function (results, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const lat = results[0].y;
+                        const lon = results[0].x;
+                        fetchTimeBasedWeather(lat, lon, results[0].address_name, timeVal);
+                    } else {
+                        logToScreen(`⚠️ 위치 검색 실패. 현재 위치 날씨를 시도하거나 정확한 지명을 입력하세요.`);
+                        alert('위치를 찾을 수 없습니다. 정확한 지역명을 입력해주세요.');
+                    }
+                });
             }
-            document.getElementById('temp-val').innerText = data.main.temp + '°C';
-            document.getElementById('weather-desc').innerText = data.weather[0].description;
-            document.getElementById('humidity-val').innerText = data.main.humidity + '%';
-            document.getElementById('wind-val').innerText = data.wind.speed + 'm/s';
-
-            document.querySelector('.weather-panel').classList.add('show');
-
-            // 미세먼지 (좌표 기반)
-            checkDust(data.coord.lat, data.coord.lon, apiKey);
-        })
-        .catch(err => {
-            console.error(err);
-            alert('날씨 정보를 가져오는데 실패했습니다.');
         });
+    } else {
+        alert('위치 검색 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    }
 }
 
-function checkDust(lat, lon, apiKey) {
-    // OpenWeatherMap Air Pollution API
-    fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`)
-        .then(res => res.json())
-        .then(data => {
-            const aqi = data.list[0].main.aqi; // 1(좋음) ~ 5(매우 나쁨)
-            const aqiText = ['좋음', '보통', '보통', '나쁨', '매우 나쁨'];
-            const pm25 = data.list[0].components.pm2_5;
+async function fetchTimeBasedWeather(lat, lon, displayName, datetime) {
+    try {
+        logToScreen(`🌐 기상 예보 데이터 수신 중... (${displayName})`);
 
-            document.getElementById('dust-val').innerText = `${aqiText[aqi - 1]} (${pm25}µg/m³)`;
-        });
+        const weather = await getWeatherForecast(lat, lon, datetime);
+        const air = await getAirQualityForecast(lat, lon, datetime);
+
+        if (!weather) throw new Error('날씨 예보 정보를 가져올 수 없습니다.');
+
+        updateWeatherUI(weather, displayName);
+        renderDustUI(air);
+
+        document.getElementById('weather-results').style.display = 'block';
+        document.getElementById('weather-placeholder').style.display = 'none';
+
+        logToScreen(`✅ [${displayName}] ${datetime} 날씨 정보 업데이트 완료`);
+    } catch (err) {
+        logToScreen(`❌ 조회 오류: ${err.message}`);
+        console.error(err);
+        alert(`정보를 가져오는데 실패했습니다: ${err.message}`);
+    }
 }
+
+async function getWeatherForecast(lat, lon, datetime) {
+    const date = new Date(datetime);
+    const dateStr = getLocalYMD(date);
+    const hour = date.getHours();
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,weathercode,windspeed_10m,precipitation_probability&timezone=auto&forecast_days=7`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const timeIndex = data.hourly.time.findIndex(t => {
+        const d = new Date(t);
+        return getLocalYMD(d) === dateStr && d.getHours() === hour;
+    });
+
+    if (timeIndex === -1) return null;
+
+    const code = data.hourly.weathercode[timeIndex];
+    const conditions = {
+        0: '맑음 ☀️', 1: '대체로 맑음 🌤️', 2: '흐림 ⛅', 3: '흐림 ☁️',
+        45: '안개 🌫️', 48: '안개 🌫️',
+        51: '이슬비 🌧️', 53: '이슬비 🌧️', 55: '이슬비 🌧️',
+        61: '비 🌧️', 63: '비 🌧️', 65: '비 🌧️',
+        71: '눈 🌨️', 73: '눈 🌨️', 75: '눈 🌨️',
+        95: '뇌우 ⛈️'
+    };
+
+    return {
+        temp: Math.round(data.hourly.temperature_2m[timeIndex]),
+        desc: conditions[code] || '흐림',
+        humidity: data.hourly.relative_humidity_2m[timeIndex],
+        wind: data.hourly.windspeed_10m[timeIndex],
+        precip: data.hourly.precipitation_probability[timeIndex]
+    };
+}
+
+async function getAirQualityForecast(lat, lon, datetime) {
+    const date = new Date(datetime);
+    const dateStr = getLocalYMD(date);
+    const hour = date.getHours();
+
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5&timezone=auto`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const timeIndex = data.hourly.time.findIndex(t => {
+            const d = new Date(t);
+            return getLocalYMD(d) === dateStr && d.getHours() === hour;
+        });
+
+        if (timeIndex === -1) return null;
+
+        return {
+            pm10: data.hourly.pm10[timeIndex],
+            pm25: data.hourly.pm2_5[timeIndex]
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+function updateWeatherUI(data, displayName) {
+    document.getElementById('temp-val').innerText = data.temp + '°C';
+    document.getElementById('weather-desc').innerText = data.desc;
+    document.getElementById('humidity-val').innerText = data.humidity + '%';
+    document.getElementById('wind-val').innerText = data.wind.toFixed(1) + 'km/h';
+}
+
+function renderDustUI(air) {
+    const area = document.getElementById('dust-traffic-light-area');
+    if (!area) return;
+
+    if (!air) {
+        area.innerHTML = '<div class="weather-card" style="width: 100%; min-height: 150px; background: #f0f0f0; color: #ccc; display: flex; align-items: center; justify-content: center;">미세먼지 예보 정보가 없습니다.</div>';
+        return;
+    }
+
+    const pm10Stat = getDustStatus(air.pm10, 'pm10');
+    const pm25Stat = getDustStatus(air.pm25, 'pm25');
+
+    area.innerHTML = `
+        <div class="dust-guidance-box ${pm25Stat.colorClass}">
+            <div class="guidance-title">🏃 러너 미세먼지 신호등 (PM2.5 기준)</div>
+            <div class="guidance-message">"${pm25Stat.message}"</div>
+        </div>
+
+        <div class="dust-container">
+            <div class="dust-box ${pm10Stat.colorClass}">
+                <div class="dust-label">미세먼지 (PM10)</div>
+                <div class="dust-value">${Math.round(air.pm10)} µg/m³</div>
+                <div class="dust-status">${pm10Stat.status}</div>
+            </div>
+            <div class="dust-box ${pm25Stat.colorClass}">
+                <div class="dust-label">초미세먼지 (PM2.5)</div>
+                <div class="dust-value">${Math.round(air.pm25)} µg/m³</div>
+                <div class="dust-status">${pm25Stat.status}</div>
+            </div>
+        </div>
+    `;
+}
+
+
+function getDustStatus(value, type) {
+    let status = '';
+    let colorClass = '';
+    let message = '';
+
+    if (type === 'pm10') {
+        if (value <= 30) { status = '좋음'; colorClass = 'dust-good'; }
+        else if (value <= 80) { status = '보통'; colorClass = 'dust-normal'; }
+        else if (value <= 150) { status = '나쁨'; colorClass = 'dust-bad'; }
+        else { status = '매우 나쁨'; colorClass = 'dust-very-bad'; }
+    } else {
+        // PM2.5 기준 (임바표 러너 가이드 - 강화된 기준)
+        if (value <= 25) {
+            status = '초록불 (축복)';
+            colorClass = 'dust-good';
+            message = '축복! 맘껏 뛰어도 OK! 🏃‍♂️✨';
+        } else if (value <= 45) {
+            status = '노란불 (주의)';
+            colorClass = 'dust-normal';
+            message = '조깅 OK, 빡런 NO. 코로 숨 쉬세요. 👃';
+        } else if (value <= 75) {
+            status = '주황불 (경고)';
+            colorClass = 'dust-bad';
+            message = '실내 운동 하세요! 🏠💪';
+        } else {
+            status = '빨강불 (금지)';
+            colorClass = 'dust-very-bad';
+            message = '절대 금지. 집에서 쉬세요. 🛌⛔';
+        }
+    }
+    return { status, colorClass, message };
+}
+
 
 // 거리 입력 시 페이스/시간 자동 계산 (단순 추정)
 // 평균 페이스 6:00/km 기준
@@ -605,12 +795,23 @@ function updateEstimatedTime() {
 
 function setDefaultTime() {
     const now = new Date();
-    // 현재는 사용하지 않음 (대회 날짜 등은 사용자 입력)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    const timeInput = document.getElementById('weather-time');
+    if (timeInput) {
+        timeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        logToScreen(`⏰ 기본 시간 설정 완료: ${timeInput.value}`);
+    }
 }
 
 // 코스 생성 (시뮬레이션)
 function generateRoute() {
-    const dist = parseFloat(document.getElementById('target-distance').value);
+    const distEl = document.getElementById('distance') || document.getElementById('target-distance');
+    const dist = distEl ? parseFloat(distEl.value) : 0;
     if (!dist || !selectedStartCoords) {
         alert('출발지와 목표 거리를 설정해주세요.');
         return;
@@ -749,6 +950,391 @@ function deleteRoute(id) {
     loadSavedRoutesFromStorage();
 }
 
+// --- 대회 기록장 관련 로직 ---
+let raceRecords = [];
+let selectedRacePhoto = null;
+
+function handlePhotoSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        selectedRacePhoto = event.target.result; // Base64
+        const preview = document.getElementById('photo-preview');
+        const container = document.getElementById('photo-preview-container');
+        if (preview && container) {
+            preview.src = selectedRacePhoto;
+            container.style.display = 'block';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveRaceRecord() {
+    const editingId = document.getElementById('editing-record-id').value;
+    const name = document.getElementById('race-name').value;
+    const date = document.getElementById('race-date').value;
+    const location = document.getElementById('race-location').value;
+    const type = document.getElementById('race-type').value;
+    const shoes = document.getElementById('race-shoes').value;
+    const h = document.getElementById('race-h').value || '0';
+    const m = document.getElementById('race-m').value || '0';
+    const s = document.getElementById('race-s').value || '0';
+    const memo = document.getElementById('race-memo').value;
+
+    if (!name || !date) {
+        alert('대회명과 일자를 입력해주세요.');
+        return;
+    }
+
+    const timeStr = `${h.padStart(2, '0')}:${m.padStart(2, '0')}:${s.padStart(2, '0')}`;
+
+    if (editingId) {
+        // 수정 모드
+        const index = raceRecords.findIndex(r => r.id === parseInt(editingId));
+        if (index !== -1) {
+            raceRecords[index] = {
+                ...raceRecords[index],
+                name, date, location, type, shoes,
+                time: timeStr,
+                memo,
+                photo: selectedRacePhoto || raceRecords[index].photo
+            };
+            logToScreen(`🏅 대회 기록 수정 완료: ${name}`);
+        }
+    } else {
+        // 신규모드
+        const record = {
+            id: Date.now(),
+            name, date, location, type, shoes,
+            time: timeStr,
+            memo,
+            photo: selectedRacePhoto
+        };
+        raceRecords.push(record);
+        logToScreen(`🏅 새로운 대회 기록 저장: ${name}`);
+    }
+
+    localStorage.setItem('marathon_race_records', JSON.stringify(raceRecords));
+
+    renderRaceRecords();
+    cancelEdit(); // 폼 초기화 및 상태 해제
+    alert(editingId ? '기록이 수정되었습니다!' : '기록이 저장되었습니다!');
+}
+
+function editRaceRecord(id) {
+    const record = raceRecords.find(r => r.id === id);
+    if (!record) return;
+
+    // 폼에 데이터 채우기
+    document.getElementById('editing-record-id').value = record.id;
+    document.getElementById('race-name').value = record.name;
+    document.getElementById('race-date').value = record.date;
+    document.getElementById('race-location').value = record.location;
+    document.getElementById('race-type').value = record.type;
+    document.getElementById('race-shoes').value = record.shoes;
+
+    const timeParts = record.time.split(':');
+    document.getElementById('race-h').value = parseInt(timeParts[0]);
+    document.getElementById('race-m').value = parseInt(timeParts[1]);
+    document.getElementById('race-s').value = parseInt(timeParts[2]);
+    document.getElementById('race-memo').value = record.memo;
+
+    // 사진 미리보기
+    if (record.photo) {
+        const preview = document.getElementById('photo-preview');
+        const container = document.getElementById('photo-preview-container');
+        preview.src = record.photo;
+        container.style.display = 'block';
+    } else {
+        document.getElementById('photo-preview-container').style.display = 'none';
+    }
+
+    // UI 변경
+    const saveBtn = document.getElementById('save-race-btn');
+    saveBtn.innerHTML = '💾 기록 수정하기';
+    saveBtn.style.background = '#667eea';
+    document.getElementById('cancel-edit-btn').style.display = 'block';
+    document.querySelector('#records-section h2').innerText = '🏅 대회 기록 수정';
+
+    // 상단으로 스크롤
+    document.querySelector('.records-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEdit() {
+    resetRaceForm();
+    document.getElementById('editing-record-id').value = '';
+    const saveBtn = document.getElementById('save-race-btn');
+    saveBtn.innerHTML = '💾 기록 저장하기';
+    saveBtn.style.background = '#20bf6b';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+    document.querySelector('#records-section h2').innerText = '🏅 새로운 대회 기록 등록';
+}
+
+function resetRaceForm() {
+    document.getElementById('race-name').value = '';
+    document.getElementById('race-date').value = '';
+    document.getElementById('race-location').value = '';
+    document.getElementById('race-shoes').value = '';
+    document.getElementById('race-h').value = '';
+    document.getElementById('race-m').value = '';
+    document.getElementById('race-s').value = '';
+    document.getElementById('race-memo').value = '';
+    document.getElementById('race-photo').value = '';
+    document.getElementById('photo-preview-container').style.display = 'none';
+    selectedRacePhoto = null;
+}
+
 function loadRaceRecordsFromStorage() {
-    // 대회 기록 로드 구현
+    const saved = localStorage.getItem('marathon_race_records');
+    if (saved) {
+        raceRecords = JSON.parse(saved);
+        renderRaceRecords();
+    }
+}
+
+function deleteRaceRecord(id) {
+    if (confirm('이 기록을 삭제하시겠습니까?')) {
+        raceRecords = raceRecords.filter(r => r.id !== id);
+        localStorage.setItem('marathon_race_records', JSON.stringify(raceRecords));
+        renderRaceRecords();
+    }
+}
+
+function renderRaceRecords() {
+    const grid = document.getElementById('race-records-list');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (raceRecords.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #999; padding: 40px;">저장된 대회 기록이 없습니다. 완주 기록을 등록해보세요!</p>';
+        return;
+    }
+
+    // 최신순 정렬
+    const sorted = [...raceRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    sorted.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'record-card';
+        card.style.animation = 'fadeIn 0.5s ease forwards';
+        card.style.position = 'relative';
+        card.style.cursor = 'pointer';
+        card.title = '클릭하여 수정';
+        card.onclick = (e) => {
+            // 삭제 버튼 클릭 시에는 수정 모드로 진입하지 않음
+            if (e.target.tagName !== 'BUTTON') {
+                editRaceRecord(r.id);
+            }
+        };
+
+        const displayType = r.type === '42.195' ? 'Full' : (r.type === '21.0975' ? 'Half' : (r.type ? r.type + 'km' : '기타'));
+
+        card.innerHTML = `
+            ${r.photo ? `<img src="${r.photo}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">` :
+                `<div style="width: 100%; height: 100px; background: #f0f0f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ccc; margin-bottom: 10px;">No Photo</div>`}
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">${r.date}</div>
+            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;">${r.name}</div>
+            <div style="color: #667eea; font-weight: bold; margin-bottom: 10px;">${r.time} (${displayType})</div>
+            ${r.shoes ? `<div style="font-size: 0.85rem; color: #555; margin-bottom: 5px;">👟 ${r.shoes}</div>` : ''}
+            ${r.memo ? `<div style="font-size: 0.85rem; color: #777; font-style: italic; border-top: 1px dashed #eee; padding-top: 5px;">${r.memo}</div>` : ''}
+            <button onclick="deleteRaceRecord(${r.id})" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; font-size: 1.2rem; cursor: pointer; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">&times;</button>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+// --- 대회 일정 (D-Day) 관련 로직 ---
+let schedules = [];
+
+function loadSchedules() {
+    const saved = localStorage.getItem('marathon_schedules');
+    if (saved) {
+        schedules = JSON.parse(saved);
+        renderSchedules();
+    }
+}
+
+function saveSchedules() {
+    localStorage.setItem('marathon_schedules', JSON.stringify(schedules));
+}
+
+function addSchedule() {
+    const editingId = document.getElementById('editing-schedule-id').value;
+    const name = document.getElementById('schedule-name').value;
+    const type = document.getElementById('schedule-type').value;
+    const target = document.getElementById('schedule-target').value;
+    const date = document.getElementById('schedule-date').value;
+
+    if (!name || !date) {
+        alert('대회명과 날짜/시간을 입력해주세요.');
+        return;
+    }
+
+    // 페이스 계산
+    const pace = calculatePaceValue(type, target);
+
+    if (editingId) {
+        // 수정 모드
+        const index = schedules.findIndex(s => s.id === parseInt(editingId));
+        if (index !== -1) {
+            schedules[index] = {
+                ...schedules[index],
+                name, type, target, pace, date
+            };
+            logToScreen(`📅 대회 일정 수정 완료: ${name}`);
+        }
+    } else {
+        // 신규 모드
+        const newSchedule = {
+            id: Date.now(),
+            name, type, target, pace, date
+        };
+        schedules.push(newSchedule);
+        logToScreen(`📅 새 대회 일정 추가됨: ${name}`);
+    }
+
+    saveSchedules();
+    renderSchedules();
+    cancelScheduleEdit();
+
+    alert(editingId ? '일정이 수정되었습니다!' : '새 일정이 추가되었습니다!');
+}
+
+function editSchedule(id) {
+    const s = schedules.find(item => item.id === id);
+    if (!s) return;
+
+    // 폼 채우기
+    document.getElementById('editing-schedule-id').value = s.id;
+    document.getElementById('schedule-name').value = s.name;
+    document.getElementById('schedule-type').value = s.type;
+    document.getElementById('schedule-target').value = s.target || '';
+    document.getElementById('schedule-date').value = s.date;
+
+    // 페이스 미리보기 업데이트
+    previewPace();
+
+    // UI 변경
+    const addBtn = document.getElementById('add-schedule-btn');
+    addBtn.innerHTML = '💾 일정 수정하기';
+    addBtn.style.background = '#667eea';
+    document.getElementById('cancel-schedule-edit-btn').style.display = 'block';
+
+    // 상단으로 스크롤
+    document.querySelector('#schedule-section .control-panel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelScheduleEdit() {
+    document.getElementById('editing-schedule-id').value = '';
+    document.getElementById('schedule-name').value = '';
+    document.getElementById('schedule-target').value = '';
+    document.getElementById('schedule-date').value = '';
+    document.getElementById('pace-preview').innerText = '';
+
+    const addBtn = document.getElementById('add-schedule-btn');
+    addBtn.innerHTML = '➕ 일정 추가하기';
+    addBtn.style.background = '#667eea';
+    document.getElementById('cancel-schedule-edit-btn').style.display = 'none';
+}
+
+function calculatePaceValue(type, target) {
+    const sec = parseTimeToSeconds(target);
+    if (sec <= 0) return null;
+
+    let dist = 10; // Default for 10km if type is not matched
+    if (type === 'Full') dist = 42.195;
+    else if (type === 'Half') dist = 21.0975;
+    else if (type === '10km') dist = 10;
+    else if (type === '5km') dist = 5;
+
+    return formatPace(sec / dist);
+}
+
+function previewPace() {
+    const type = document.getElementById('schedule-type').value;
+    const target = document.getElementById('schedule-target').value;
+    const pace = calculatePaceValue(type, target);
+    const preview = document.getElementById('pace-preview');
+    if (pace) {
+        preview.innerText = `💡 예상 페이스: ${pace}/km`;
+    } else {
+        preview.innerText = '';
+    }
+}
+
+function deleteSchedule(id) {
+    if (confirm('이 일정을 삭제하시겠습니까?')) {
+        schedules = schedules.filter(s => s.id !== id);
+        saveSchedules();
+        renderSchedules();
+    }
+}
+
+function calculateDDay(raceDateTime) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(raceDateTime); // This now correctly parses datetime string
+    const raceDay = new Date(raceDateTime);
+    raceDay.setHours(0, 0, 0, 0);
+
+    const diffTime = raceDay - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'D-Day';
+    if (diffDays > 0) return `D-${diffDays}`;
+    return `D+${Math.abs(diffDays)}`;
+}
+
+function renderSchedules() {
+    const grid = document.getElementById('schedule-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (schedules.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #999; padding: 40px;">등록된 대회가 없습니다. 일정을 추가해보세요!</p>';
+        return;
+    }
+
+    // 날짜 순으로 정렬
+    const sorted = [...schedules].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    sorted.forEach(s => {
+        const dday = calculateDDay(s.date);
+        const card = document.createElement('div');
+        card.className = 'record-card'; // 기존 레코드 카드 스타일 재활용
+        card.style.animation = 'fadeIn 0.5s ease forwards';
+        card.style.position = 'relative';
+        card.style.cursor = 'pointer';
+        card.title = '클릭하여 수정';
+        card.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                editSchedule(s.id);
+            }
+        };
+
+        // D-Day 색상 구분
+        let ddayColor = '#667eea';
+        if (dday === 'D-Day') ddayColor = '#eb4d4b';
+        else if (dday.startsWith('D+')) ddayColor = '#999';
+
+        // 날짜/시간 포맷팅
+        const d = new Date(s.date);
+        const dayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+        card.innerHTML = `
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">${dayStr} <span style="color: #667eea; font-weight: bold;">${timeStr} 출발</span></div>
+            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">${s.name}</div>
+            <div style="background: #f0f4ff; border-radius: 5px; padding: 8px 12px; font-size: 0.9rem; display: block; margin-bottom: 10px; border-left: 3px solid #667eea;">
+                <div style="font-weight: bold; color: #333;">${s.type}</div>
+                ${s.target ? `<div style="color: #666; margin-top: 4px;">목표: <span style="color: #333; font-weight: bold;">${s.target}</span></div>` : ''}
+                ${s.pace ? `<div style="color: #667eea; font-size: 0.8rem; margin-top: 2px;">(예상 페이스: ${s.pace})</div>` : ''}
+            </div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: ${ddayColor}; margin-top: 5px;">${dday}</div>
+            <button onclick="deleteSchedule(${s.id})" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ddd;">&times;</button>
+        `;
+        grid.appendChild(card);
+    });
 }
