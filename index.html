@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -20,6 +20,7 @@
             <button class="tab-btn" data-tab="schedule">📅 대회 일정</button>
             <button class="tab-btn" data-tab="pace">⏱️ 페이스 계산기</button>
             <button class="tab-btn" data-tab="records">🏅 대회 기록장</button>
+            <button class="tab-btn" data-tab="shoes">👟 러닝화</button>
         </div>
 
         <!-- 날씨/미세먼지 섹션 -->
@@ -269,7 +270,11 @@
                         </div>
                         <div class="form-group">
                             <label>👟 착용 러닝화</label>
-                            <input type="text" id="race-shoes" placeholder="예: 나이키 알파플라이 3">
+                            <select id="race-shoes-select" onchange="handleShoesSelectChange()">
+                                <option value="">-- 러닝화 선택 --</option>
+                                <option value="__direct__">✏️ 직접 입력</option>
+                            </select>
+                            <input type="text" id="race-shoes" placeholder="러닝화 이름 직접 입력" style="margin-top: 8px; display: none;">
                         </div>
                         <div class="form-group">
                             <label>⏱️ 완주 기록 (HH:MM:SS)</label>
@@ -309,6 +314,61 @@
                     <h2 style="margin-bottom: 20px; color: #667eea;">🏅 나의 대회 이력</h2>
                     <div id="race-records-list" class="race-records-grid">
                         <!-- 기록 카드들이 명기됨 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 러닝화 관리 섹션 -->
+        <div id="shoes-section" class="tab-content">
+            <div class="records-container">
+                <div class="record-form-card">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">👟 러닝화 등록</h2>
+                    <input type="hidden" id="editing-shoe-id">
+                    <div class="records-form-grid">
+                        <div class="form-group">
+                            <label>🏷️ 브랜드</label>
+                            <input type="text" id="shoe-brand" placeholder="예: 나이키, 아디다스, 아식스">
+                        </div>
+                        <div class="form-group">
+                            <label>👟 모델명</label>
+                            <input type="text" id="shoe-model" placeholder="예: 알파플라이 3, 메타스피드 스카이">
+                        </div>
+                        <div class="form-group">
+                            <label>📅 구매일</label>
+                            <input type="date" id="shoe-buy-date">
+                        </div>
+                        <div class="form-group">
+                            <label>📏 현재 누적 거리 (km)</label>
+                            <input type="number" id="shoe-km" placeholder="0" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>🚦 상태</label>
+                            <select id="shoe-status">
+                                <option value="사용중">🟢 사용중</option>
+                                <option value="보관중">🟡 보관중</option>
+                                <option value="은퇴">🔴 은퇴</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>📝 메모</label>
+                            <textarea id="shoe-memo" placeholder="특이사항, 구매처 등" style="width: 100%; height: 70px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: none;"></textarea>
+                        </div>
+                    </div>
+                    <div class="button-group" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button id="save-shoe-btn" class="generate-btn" style="background: #20bf6b; flex: 2; margin-top: 0;" onclick="saveRunningShoe()">
+                            💾 러닝화 저장
+                        </button>
+                        <button id="cancel-shoe-edit-btn" class="reset-btn" style="background: #a4b0be; flex: 1; display: none;" onclick="cancelShoeEdit()">
+                            ✖ 취소
+                        </button>
+                    </div>
+                </div>
+
+                <div class="records-history">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">👟 나의 러닝화</h2>
+                    <div id="shoes-list" class="shoes-grid">
+                        <!-- 러닝화 카드들 -->
                     </div>
                 </div>
             </div>

@@ -440,6 +440,7 @@ function setupEventListeners() {
     if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEdit);
 
     loadRaceRecordsFromStorage();
+    loadRunningShoes();
 
     // 일정 관리 초기화
     loadSchedules();
@@ -977,7 +978,15 @@ function saveRaceRecord() {
     const date = document.getElementById('race-date').value;
     const location = document.getElementById('race-location').value;
     const type = document.getElementById('race-type').value;
-    const shoes = document.getElementById('race-shoes').value;
+    // 착용 러닝화: 드롭다운에서 선택하거나 직접 입력
+    const shoesSelect = document.getElementById('race-shoes-select');
+    const shoesInput = document.getElementById('race-shoes');
+    let shoes = '';
+    if (shoesSelect.value === '__direct__') {
+        shoes = shoesInput.value.trim();
+    } else {
+        shoes = shoesSelect.value;
+    }
     const h = document.getElementById('race-h').value || '0';
     const m = document.getElementById('race-m').value || '0';
     const s = document.getElementById('race-s').value || '0';
@@ -1033,7 +1042,26 @@ function editRaceRecord(id) {
     document.getElementById('race-date').value = record.date;
     document.getElementById('race-location').value = record.location;
     document.getElementById('race-type').value = record.type;
-    document.getElementById('race-shoes').value = record.shoes;
+
+    // 착용 러닝화 선택 복원
+    populateShoesDropdown();
+    const shoesSelect = document.getElementById('race-shoes-select');
+    const shoesInput = document.getElementById('race-shoes');
+    const savedShoes = record.shoes || '';
+    // 현재 드롭다운에 존재하는지 확인
+    const optionExists = Array.from(shoesSelect.options).some(o => o.value === savedShoes && o.value !== '' && o.value !== '__direct__');
+    if (optionExists) {
+        shoesSelect.value = savedShoes;
+        shoesInput.style.display = 'none';
+        shoesInput.value = '';
+    } else if (savedShoes) {
+        shoesSelect.value = '__direct__';
+        shoesInput.style.display = 'block';
+        shoesInput.value = savedShoes;
+    } else {
+        shoesSelect.value = '';
+        shoesInput.style.display = 'none';
+    }
 
     const timeParts = record.time.split(':');
     document.getElementById('race-h').value = parseInt(timeParts[0]);
@@ -1076,7 +1104,10 @@ function resetRaceForm() {
     document.getElementById('race-name').value = '';
     document.getElementById('race-date').value = '';
     document.getElementById('race-location').value = '';
-    document.getElementById('race-shoes').value = '';
+    const shoesSelect = document.getElementById('race-shoes-select');
+    if (shoesSelect) shoesSelect.value = '';
+    const raceShoes = document.getElementById('race-shoes');
+    if (raceShoes) { raceShoes.value = ''; raceShoes.style.display = 'none'; }
     document.getElementById('race-h').value = '';
     document.getElementById('race-m').value = '';
     document.getElementById('race-s').value = '';
@@ -1285,6 +1316,173 @@ function calculateDDay(raceDateTime) {
     if (diffDays === 0) return 'D-Day';
     if (diffDays > 0) return `D-${diffDays}`;
     return `D+${Math.abs(diffDays)}`;
+}
+
+// ==================== 러닝화 관리 ====================
+let runningShoes = [];
+
+function loadRunningShoes() {
+    const saved = localStorage.getItem('marathon_running_shoes');
+    if (saved) {
+        runningShoes = JSON.parse(saved);
+    }
+    renderRunningShoes();
+    populateShoesDropdown();
+}
+
+function saveRunningShoe() {
+    const brand = document.getElementById('shoe-brand').value.trim();
+    const model = document.getElementById('shoe-model').value.trim();
+    const buyDate = document.getElementById('shoe-buy-date').value;
+    const km = parseFloat(document.getElementById('shoe-km').value) || 0;
+    const status = document.getElementById('shoe-status').value;
+    const memo = document.getElementById('shoe-memo').value.trim();
+
+    if (!brand || !model) {
+        alert('브랜드와 모델명을 입력해주세요.');
+        return;
+    }
+
+    const editingId = document.getElementById('editing-shoe-id').value;
+    const fullName = `${brand} ${model}`;
+
+    if (editingId) {
+        const index = runningShoes.findIndex(s => s.id === parseInt(editingId));
+        if (index !== -1) {
+            runningShoes[index] = { ...runningShoes[index], brand, model, fullName, buyDate, km, status, memo };
+        }
+    } else {
+        runningShoes.push({ id: Date.now(), brand, model, fullName, buyDate, km, status, memo });
+    }
+
+    localStorage.setItem('marathon_running_shoes', JSON.stringify(runningShoes));
+    renderRunningShoes();
+    populateShoesDropdown();
+    cancelShoeEdit();
+    alert(editingId ? '러닝화 정보가 수정되었습니다!' : '러닝화가 저장되었습니다!');
+}
+
+function deleteRunningShoe(id) {
+    if (!confirm('이 러닝화를 삭제하시겠습니까?')) return;
+    runningShoes = runningShoes.filter(s => s.id !== id);
+    localStorage.setItem('marathon_running_shoes', JSON.stringify(runningShoes));
+    renderRunningShoes();
+    populateShoesDropdown();
+}
+
+function editRunningShoe(id) {
+    const shoe = runningShoes.find(s => s.id === id);
+    if (!shoe) return;
+
+    document.getElementById('editing-shoe-id').value = shoe.id;
+    document.getElementById('shoe-brand').value = shoe.brand;
+    document.getElementById('shoe-model').value = shoe.model;
+    document.getElementById('shoe-buy-date').value = shoe.buyDate || '';
+    document.getElementById('shoe-km').value = shoe.km || 0;
+    document.getElementById('shoe-status').value = shoe.status || '사용중';
+    document.getElementById('shoe-memo').value = shoe.memo || '';
+
+    const saveBtn = document.getElementById('save-shoe-btn');
+    saveBtn.innerHTML = '💾 러닝화 수정하기';
+    saveBtn.style.background = '#667eea';
+    document.getElementById('cancel-shoe-edit-btn').style.display = 'block';
+
+    document.querySelector('#shoes-section .record-form-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelShoeEdit() {
+    document.getElementById('editing-shoe-id').value = '';
+    document.getElementById('shoe-brand').value = '';
+    document.getElementById('shoe-model').value = '';
+    document.getElementById('shoe-buy-date').value = '';
+    document.getElementById('shoe-km').value = '';
+    document.getElementById('shoe-status').value = '사용중';
+    document.getElementById('shoe-memo').value = '';
+
+    const saveBtn = document.getElementById('save-shoe-btn');
+    saveBtn.innerHTML = '💾 러닝화 저장';
+    saveBtn.style.background = '#20bf6b';
+    document.getElementById('cancel-shoe-edit-btn').style.display = 'none';
+}
+
+function renderRunningShoes() {
+    const list = document.getElementById('shoes-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (runningShoes.length === 0) {
+        list.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #999; padding: 40px;">등록된 러닝화가 없습니다. 새 러닝화를 추가해보세요!</p>';
+        return;
+    }
+
+    const statusEmoji = { '사용중': '🟢', '보관중': '🟡', '은퇴': '🔴' };
+    const statusClass = { '사용중': 'shoe-active', '보관중': 'shoe-stored', '은퇴': 'shoe-retired' };
+
+    runningShoes.forEach(shoe => {
+        const card = document.createElement('div');
+        card.className = 'shoe-card';
+        card.onclick = (e) => { if (e.target.tagName !== 'BUTTON') editRunningShoe(shoe.id); };
+        card.title = '클릭하여 수정';
+
+        const kmBar = Math.min((shoe.km / 800) * 100, 100);
+        const kmColor = shoe.km < 400 ? '#20bf6b' : shoe.km < 700 ? '#f7b731' : '#eb3b5a';
+
+        card.innerHTML = `
+            <div class="shoe-card-header">
+                <div class="shoe-icon">👟</div>
+                <span class="shoe-status-badge ${statusClass[shoe.status] || 'shoe-active'}">
+                    ${statusEmoji[shoe.status] || '🟢'} ${shoe.status}
+                </span>
+            </div>
+            <div class="shoe-brand-name">${shoe.brand}</div>
+            <div class="shoe-model-name">${shoe.model}</div>
+            ${shoe.buyDate ? `<div class="shoe-meta">📅 ${shoe.buyDate}</div>` : ''}
+            <div class="shoe-km-section">
+                <div class="shoe-km-label">
+                    <span>누적 거리</span>
+                    <span style="color:${kmColor}; font-weight:700;">${shoe.km.toFixed(0)} km</span>
+                </div>
+                <div class="shoe-km-bar-bg">
+                    <div class="shoe-km-bar-fill" style="width:${kmBar}%; background:${kmColor};"></div>
+                </div>
+                <div class="shoe-km-hint">800km 기준</div>
+            </div>
+            ${shoe.memo ? `<div class="shoe-memo">${shoe.memo}</div>` : ''}
+            <button onclick="deleteRunningShoe(${shoe.id})" class="shoe-delete-btn">✕</button>
+        `;
+        list.appendChild(card);
+    });
+}
+
+function populateShoesDropdown() {
+    const select = document.getElementById('race-shoes-select');
+    if (!select) return;
+
+    const currentVal = select.value;
+
+    select.innerHTML = `
+        <option value="">-- 러닝화 선택 --</option>
+        ${runningShoes.filter(s => s.status !== '은퇴').map(s =>
+            `<option value="${s.fullName}">${s.brand} ${s.model}</option>`
+        ).join('')}
+        <option value="__direct__">✏️ 직접 입력</option>
+    `;
+
+    if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+        select.value = currentVal;
+    }
+}
+
+function handleShoesSelectChange() {
+    const select = document.getElementById('race-shoes-select');
+    const input = document.getElementById('race-shoes');
+    if (select.value === '__direct__') {
+        input.style.display = 'block';
+        input.focus();
+    } else {
+        input.style.display = 'none';
+        input.value = '';
+    }
 }
 
 function renderSchedules() {
