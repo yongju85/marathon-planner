@@ -364,10 +364,6 @@ select:focus {
         grid-template-columns: 1fr;
     }
 
-    .menu-tabs {
-        flex-direction: column;
-    }
-
     .pace-grid {
         grid-template-columns: 1fr;
     }
@@ -375,10 +371,10 @@ select:focus {
 
 /* 메뉴 탭 스타일 */
 .menu-tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
 }
 
 .tab-btn {
